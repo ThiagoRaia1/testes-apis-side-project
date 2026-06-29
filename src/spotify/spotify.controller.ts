@@ -42,7 +42,7 @@ export class SpotifyController {
   }
 
   @Get('callback')
-  async callback(@Query('code') code: string) {
+  async callback(@Query('code') code: string, @Res() res: express.Response) {
     const tokenResponse = await axios.post(
       'https://accounts.spotify.com/api/token',
       new URLSearchParams({
@@ -73,7 +73,94 @@ export class SpotifyController {
       },
     );
 
-    return artists.data.items;
+    const html = `
+<html>
+  <head>
+    <title>Spotify Top Artists</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #121212;
+        color: white;
+        margin: 0;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+      }
+
+      .card {
+        background: #181818;
+        padding: 15px;
+        border-radius: 12px;
+        text-align: center;
+        transition: 0.2s;
+      }
+
+      .card:hover {
+        transform: scale(1.05);
+        background: #282828;
+      }
+
+      img {
+        width: 100%;
+        border-radius: 10px;
+      }
+
+      .name {
+        margin-top: 10px;
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+      .popularity {
+        font-size: 12px;
+        color: #b3b3b3;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>🎧 Seus 5 artistas mais ouvidos</h1>
+
+    <div class="grid">
+      ${artists.data.items
+        .map(
+          (a: any) => `
+        <div class="card">
+          <img
+  src="${a.images?.[0]?.url}"
+  style="
+    width: 240px;
+    height: 240px;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 12px;
+    display: block;
+    margin: 0 auto 10px auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  "
+/>
+          <div class="name">${a.name}</div>
+        </div>
+      `,
+        )
+        .join('')}
+    </div>
+  </body>
+</html>
+`;
+
+    return res.send(html);
   }
 
   @Get(':id')
